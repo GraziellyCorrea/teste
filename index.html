@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boa Noite Pinguim</title>
+<style>
+    :root{
+        --bg:#020205;
+        --neon:#00e5ff;
+        --light:#adefff;
+    }
+
+    body{
+        margin:0;
+        overflow:hidden;
+        background:var(--bg);
+        font-family: 'Segoe UI', Arial, sans-serif;
+        color:white;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        height:100vh;
+    }
+
+    #ask-screen{
+        position:fixed;
+        width:100%;
+        height:100%;
+        background:var(--bg);
+        display:flex;
+        flex-direction:column;
+        justify-content:center;
+        align-items:center;
+        transition:1s;
+        z-index: 100;
+    }
+
+    .question-text{
+        font-size:2.4rem;
+        text-shadow:0 0 15px var(--neon);
+        margin-bottom:40px;
+        text-align: center;
+    }
+
+    .button-container{
+        display:flex;
+        gap:40px;
+    }
+
+    .neon-btn{
+        padding:15px 45px;
+        font-size:1.3rem;
+        background:none;
+        border:2px solid var(--neon);
+        color:var(--neon);
+        cursor:pointer;
+        transition:.3s;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+
+    .neon-btn:hover{
+        box-shadow:0 0 25px var(--neon);
+        background: rgba(0, 229, 255, 0.1);
+    }
+
+    #no-btn{ position:absolute; }
+
+    #anim-container{
+        display:none;
+        width:100%;
+        height:100%;
+        position:relative;
+    }
+
+    #egg{
+        position:absolute;
+        top:50%;
+        left:50%;
+        width:140px;
+        height:180px;
+        transform:translate(-50%,-50%);
+        border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+        border:6px solid var(--light);
+        box-shadow:0 0 40px var(--neon);
+        animation:pulse 1.5s infinite alternate;
+        z-index: 5;
+    }
+
+    @keyframes pulse{ to{ box-shadow:0 0 80px var(--light); transform: translate(-50%, -50%) scale(1.05); } }
+
+    #love-text{
+        position:absolute;
+        bottom: 15%;
+        left:50%;
+        transform:translateX(-50%);
+        font-size:3rem;
+        opacity:0;
+        transition:1.5s;
+        text-shadow:0 0 20px var(--neon);
+        font-weight: 900;
+        z-index: 10;
+        width: 100%;
+        text-align: center;
+    }
+
+    canvas{ position:absolute; top:0; left:0; pointer-events: none; }
+</style>
+</head>
+<body>
+
+<div id="ask-screen">
+    <h1 class="question-text">Quer abrir seu presente? :)</h1>
+    <div class="button-container">
+        <button id="yes-btn" class="neon-btn">Sim</button>
+        <button id="no-btn" class="neon-btn">Não</button>
+    </div>
+</div>
+
+<div id="anim-container">
+    <div id="egg"></div>
+    <canvas id="canvas"></canvas>
+    <h1 id="love-text">EU AMO VOCÊ PINGUIM ❤️</h1>
+</div>
+
+<script>
+const ask = document.getElementById("ask-screen");
+const yes = document.getElementById("yes-btn");
+const no = document.getElementById("no-btn");
+const anim = document.getElementById("anim-container");
+const egg = document.getElementById("egg");
+const text = document.getElementById("love-text");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+let particles = [];
+let penguinMolecules = [];
+let fireworks = [];
+let t = 0;
+let showFireworks = false;
+
+function resize(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resize);
+resize();
+
+no.addEventListener("mouseover", () => {
+    let x = Math.random() * (window.innerWidth - 100);
+    let y = Math.random() * (window.innerHeight - 50);
+    no.style.left = x + "px";
+    no.style.top = y + "px";
+});
+
+yes.onclick = () => {
+    ask.style.opacity = 0;
+    setTimeout(() => {
+        ask.style.display = "none";
+        anim.style.display = "block";
+        startSequence();
+    }, 1000);
+};
+
+function startSequence() {
+    setTimeout(() => {
+        egg.style.opacity = "0";
+        setTimeout(() => egg.style.display = "none", 500);
+        createExplosion();
+        createPenguinPoints();
+        requestAnimationFrame(animate);
+        
+        setTimeout(() => {
+            text.style.opacity = 1;
+            showFireworks = true; // Ativa os fogos
+        }, 1200);
+    }, 2500);
+}
+
+function createExplosion() {
+    for(let i=0; i<100; i++) {
+        particles.push({
+            x: canvas.width/2,
+            y: canvas.height/2,
+            vx: (Math.random()-0.5) * 25,
+            vy: (Math.random()-0.5) * 25,
+            life: 1,
+            color: "#00e5ff"
+        });
+    }
+}
+
+function createFirework() {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * (canvas.height / 2);
+    const color = `hsl(${Math.random() * 360}, 100%, 60%)`;
+    for(let i=0; i<50; i++) {
+        fireworks.push({
+            x: x,
+            y: y,
+            vx: (Math.random()-0.5) * 15,
+            vy: (Math.random()-0.5) * 15,
+            life: 1,
+            color: color
+        });
+    }
+}
+
+function createPenguinPoints() {
+    const cx = canvas.width/2;
+    const cy = canvas.height/2 - 40;
+    const structure = [
+        {x: 0, y: 0, r: 75, c: '#111', type: 'body'},
+        {x: 0, y: -85, r: 50, c: '#111', type: 'head'},
+        {x: 0, y: 15, r: 50, c: '#fff', type: 'belly'},
+        {x: -20, y: -95, r: 7, c: '#fff'},
+        {x: 20, y: -95, r: 7, c: '#fff'},
+        {x: 0, y: -75, r: 12, c: '#ff9800'},
+        {x: 75, y: 0, r: 18, c: '#111', type: 'wing'}
+    ];
+
+    structure.forEach(s => {
+        penguinMolecules.push({
+            x: canvas.width/2,
+            y: canvas.height/2,
+            tx: cx + s.x,
+            ty: cy + s.y,
+            r: s.r,
+            color: s.c,
+            type: s.type
+        });
+    });
+}
+
+function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    t += 0.15;
+
+    // 1. Partículas da Explosão Inicial
+    particles.forEach((p, i) => {
+        p.x += p.vx; p.y += p.vy;
+        p.life -= 0.02;
+        ctx.fillStyle = `rgba(0, 229, 255, ${p.life})`;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill();
+        if(p.life <= 0) particles.splice(i, 1);
+    });
+
+    // 2. Fogos de Artifício (Infinitos após o nascimento)
+    if(showFireworks && Math.random() < 0.05) createFirework();
+    fireworks.forEach((f, i) => {
+        f.x += f.vx; f.y += f.vy;
+        f.vy += 0.1; // Gravidade
+        f.life -= 0.015;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = f.color;
+        ctx.fillStyle = f.color.replace(')', `, ${f.life})`).replace('hsl', 'hsla');
+        ctx.beginPath(); ctx.arc(f.x, f.y, 2, 0, Math.PI*2); ctx.fill();
+        ctx.shadowBlur = 0;
+        if(f.life <= 0) fireworks.splice(i, 1);
+    });
+
+    // 3. Linhas Moleculares do Pinguim
+    ctx.strokeStyle = "rgba(0, 229, 255, 0.2)";
+    ctx.lineWidth = 1;
+    for(let i=0; i<penguinMolecules.length; i++){
+        for(let j=i+1; j<penguinMolecules.length; j++){
+            ctx.beginPath();
+            ctx.moveTo(penguinMolecules[i].x, penguinMolecules[i].y);
+            ctx.lineTo(penguinMolecules[j].x, penguinMolecules[j].y);
+            ctx.stroke();
+        }
+    }
+
+    // 4. Desenhar o Pinguim
+    penguinMolecules.forEach(m => {
+        let targetX = m.tx;
+        let targetY = m.ty;
+
+        if(m.type === 'wing') {
+            targetY += Math.sin(t) * 25;
+            targetX += Math.cos(t) * 10;
+        }
+
+        m.x += (targetX - m.x) * 0.1;
+        m.y += (targetY - m.y) * 0.1;
+
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = m.color === '#111' ? '#00e5ff' : m.color;
+        ctx.fillStyle = m.color;
+        ctx.beginPath();
+        ctx.arc(m.x, m.y, m.r, 0, Math.PI*2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    });
+
+    requestAnimationFrame(animate);
+}
+</script>
+</body>
+</html>
